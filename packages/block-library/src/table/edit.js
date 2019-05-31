@@ -6,8 +6,14 @@ import classnames from 'classnames';
 /**
  * WordPress dependencies
  */
-import { Fragment, Component } from '@wordpress/element';
-import { InspectorControls, BlockControls, RichText } from '@wordpress/editor';
+import { Component } from '@wordpress/element';
+import {
+	InspectorControls,
+	BlockControls,
+	RichText,
+	PanelColorSettings,
+	createCustomColorsHOC,
+} from '@wordpress/block-editor';
 import { __ } from '@wordpress/i18n';
 import {
 	PanelBody,
@@ -28,9 +34,35 @@ import {
 	deleteRow,
 	insertColumn,
 	deleteColumn,
+	toggleSection,
 } from './state';
 
-export default class TableEdit extends Component {
+const BACKGROUND_COLORS = [
+	{
+		color: '#f3f4f5',
+		name: 'Subtle light gray',
+		slug: 'subtle-light-gray',
+	},
+	{
+		color: '#e9fbe5',
+		name: 'Subtle pale green',
+		slug: 'subtle-pale-green',
+	},
+	{
+		color: '#e7f5fe',
+		name: 'Subtle pale blue',
+		slug: 'subtle-pale-blue',
+	},
+	{
+		color: '#fcf0ef',
+		name: 'Subtle pale pink',
+		slug: 'subtle-pale-pink',
+	},
+];
+
+const withCustomBackgroundColors = createCustomColorsHOC( BACKGROUND_COLORS );
+
+export class TableEdit extends Component {
 	constructor() {
 		super( ...arguments );
 
@@ -49,6 +81,8 @@ export default class TableEdit extends Component {
 		this.onInsertColumnBefore = this.onInsertColumnBefore.bind( this );
 		this.onInsertColumnAfter = this.onInsertColumnAfter.bind( this );
 		this.onDeleteColumn = this.onDeleteColumn.bind( this );
+		this.onToggleHeaderSection = this.onToggleHeaderSection.bind( this );
+		this.onToggleFooterSection = this.onToggleFooterSection.bind( this );
 
 		this.state = {
 			initialRowCount: 2,
@@ -162,6 +196,16 @@ export default class TableEdit extends Component {
 	 */
 	onInsertRowAfter() {
 		this.onInsertRow( 1 );
+	}
+
+	onToggleHeaderSection() {
+		const { attributes, setAttributes } = this.props;
+		setAttributes( toggleSection( attributes, 'head' ) );
+	}
+
+	onToggleFooterSection() {
+		const { attributes, setAttributes } = this.props;
+		setAttributes( toggleSection( attributes, 'foot' ) );
 	}
 
 	/**
@@ -314,7 +358,7 @@ export default class TableEdit extends Component {
 
 		return (
 			<Tag>
-				{ rows.map( ( { cells }, rowIndex ) =>
+				{ rows.map( ( { cells }, rowIndex ) => (
 					<tr key={ rowIndex }>
 						{ cells.map( ( { content, tag: CellTag }, columnIndex ) => {
 							const isSelected = selectedCell && (
@@ -329,12 +373,13 @@ export default class TableEdit extends Component {
 								columnIndex,
 							};
 
-							const classes = classnames( {
-								'is-selected': isSelected,
-							} );
+							const cellClasses = classnames( { 'is-selected': isSelected } );
 
 							return (
-								<CellTag key={ columnIndex } className={ classes }>
+								<CellTag
+									key={ columnIndex }
+									className={ cellClasses }
+								>
 									<RichText
 										className="wp-block-table__cell-content"
 										value={ content }
@@ -345,7 +390,7 @@ export default class TableEdit extends Component {
 							);
 						} ) }
 					</tr>
-				) }
+				) ) }
 			</Tag>
 		);
 	}
@@ -360,7 +405,12 @@ export default class TableEdit extends Component {
 	}
 
 	render() {
-		const { attributes, className } = this.props;
+		const {
+			attributes,
+			className,
+			backgroundColor,
+			setBackgroundColor,
+		} = this.props;
 		const { initialRowCount, initialColumnCount } = this.state;
 		const { hasFixedLayout, head, body, foot } = attributes;
 		const isEmpty = ! head.length && ! body.length && ! foot.length;
@@ -388,17 +438,18 @@ export default class TableEdit extends Component {
 			);
 		}
 
-		const classes = classnames( className, {
+		const classes = classnames( className, backgroundColor.class, {
 			'has-fixed-layout': hasFixedLayout,
+			'has-background': !! backgroundColor.color,
 		} );
 
 		return (
-			<Fragment>
+			<>
 				<BlockControls>
 					<Toolbar>
 						<DropdownMenu
 							icon="editor-table"
-							label={ __( 'Edit Table' ) }
+							label={ __( 'Edit table' ) }
 							controls={ this.getTableControls() }
 						/>
 					</Toolbar>
@@ -410,14 +461,39 @@ export default class TableEdit extends Component {
 							checked={ !! hasFixedLayout }
 							onChange={ this.onChangeFixedLayout }
 						/>
+						<ToggleControl
+							label={ __( 'Header section' ) }
+							checked={ !! ( head && head.length ) }
+							onChange={ this.onToggleHeaderSection }
+						/>
+						<ToggleControl
+							label={ __( 'Footer section' ) }
+							checked={ !! ( foot && foot.length ) }
+							onChange={ this.onToggleFooterSection }
+						/>
 					</PanelBody>
+					<PanelColorSettings
+						title={ __( 'Color Settings' ) }
+						initialOpen={ false }
+						colorSettings={ [
+							{
+								value: backgroundColor.color,
+								onChange: setBackgroundColor,
+								label: __( 'Background Color' ),
+								disableCustomColors: true,
+								colors: BACKGROUND_COLORS,
+							},
+						] }
+					/>
 				</InspectorControls>
 				<table className={ classes }>
 					<Section type="head" rows={ head } />
 					<Section type="body" rows={ body } />
 					<Section type="foot" rows={ foot } />
 				</table>
-			</Fragment>
+			</>
 		);
 	}
 }
+
+export default withCustomBackgroundColors( 'backgroundColor' )( TableEdit );

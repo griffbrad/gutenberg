@@ -1,4 +1,40 @@
-## 9.0.6 (Unreleased)
+## 9.3.0 (2019-05-21)
+
+### Deprecations
+- The `getAutosave`, `getAutosaveAttribute`, and `hasAutosave` selectors are deprecated. Please use the `getAutosave` selector in the `@wordpress/core-data` package.
+- The `resetAutosave` action is deprecated. An equivalent action `receiveAutosaves` has been added to the `@wordpress/core-data` package.
+
+### Internal
+
+- Refactor setupEditor effects to action-generator using controls ([#14513](https://github.com/WordPress/gutenberg/pull/14513))
+- Remove redux-multi dependency (no longer needed/used with above refactor)
+- Replace internal controls definitions with usage of new @wordpress/data-controls package (see [#15435](https://github.com/WordPress/gutenberg/pull/15435)
+
+## 9.1.0 (2019-03-06)
+
+### New Features
+
+- Added `createCustomColorsHOC` for creating a higher order `withCustomColors` component.
+- Added a new `TextEditorGlobalKeyboardShortcuts` component.
+
+### Deprecations
+
+- `EditorGlobalKeyboardShortcuts` has been deprecated in favor of `VisualEditorGlobalKeyboardShortcuts`.
+
+### Bug Fixes
+
+- BlockSwitcher will now consistently render an icon for block multi-selections.
+
+### Internal
+
+- Removed `jQuery` dependency.
+- Removed `TinyMCE` dependency.
+- RichText: improve format boundaries.
+- Refactor all post effects to action-generators using controls ([#13716](https://github.com/WordPress/gutenberg/pull/13716))
+
+## 9.0.7 (2019-01-03)
+
+## 9.0.6 (2018-12-18)
 
 ### Bug Fixes
 
@@ -9,6 +45,7 @@
 ### Bug Fixes
 
 - `getEditedPostAttribute` now correctly returns the merged result of edits as a partial change when given `'meta'` as the `attributeName`.
+- Fixes an error and unrecoverable state which occurs on autosave completion for a `'publicly_queryable' => false` post type.
 
 ## 9.0.4 (2018-11-30)
 
